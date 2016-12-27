@@ -22,8 +22,8 @@ public class ChatHeadService extends Service {
     View view;
     private String TAG = ChatHeadService.class.getCanonicalName();
 
-    Float defaultOpenPositionX;
-    Float defaultOpenPositionY;
+    double defaultOpenPositionX;
+    double defaultOpenPositionY;
     Float lastPositionX;
     Float lastPositionY;
     Float x;
@@ -53,7 +53,6 @@ public class ChatHeadService extends Service {
         final View closeView = view.findViewById(R.id.close_view);
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -80,15 +79,23 @@ public class ChatHeadService extends Service {
             }
         });
 
+            view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener(){
+
+                @Override
+                public void onGlobalLayout() {
+                    defaultOpenPositionY = view.getHeight() /10;
+                    defaultOpenPositionX = view.getWidth();
+                }
+            });
+
 
         circle.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View chatHead) {
-
                 if (isOpen) {
-                    chatHead.setX(600);
-                    chatHead.setY(120);
+                    chatHead.setX((float) defaultOpenPositionX-(2*radius));
+                    chatHead.setY((float) defaultOpenPositionY);
 //                    lastPositionX = chatHead.getX();
 //                    lastPositionY = chatHead.getY();
                       chatView.setVisibility(View.VISIBLE);
@@ -110,13 +117,14 @@ public class ChatHeadService extends Service {
                 Log.d(TAG, "onTouch: ");
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        closeView.setVisibility(View.VISIBLE);
+//                        closeView.setVisibility(View.VISIBLE);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         x = (event.getRawX() - radius);
                         circle.setX(x);
                         y = (event.getRawY() - radius - statusBarHeight);
                         circle.setY(y);
+                        chatView.setVisibility(View.GONE);
                         break;
                     case MotionEvent.ACTION_UP:
                         if (x <= halfScreen) {
@@ -130,6 +138,13 @@ public class ChatHeadService extends Service {
                         closeView.setVisibility(View.GONE);
                         break;
                 }
+                return false;
+            }
+        });
+        circle.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                closeView.setVisibility(View.VISIBLE);
                 return false;
             }
         });

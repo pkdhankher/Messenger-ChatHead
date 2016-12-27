@@ -20,6 +20,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         startService(new Intent(MainActivity.this, ChatHeadService.class));
+
+        finish();
     }
 
 }
