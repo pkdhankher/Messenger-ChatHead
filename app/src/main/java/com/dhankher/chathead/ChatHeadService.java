@@ -3,33 +3,37 @@ package com.dhankher.chathead;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
+import android.os.Build;
 import android.os.IBinder;
+import android.print.PrintAttributes;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.FrameLayout;
+
 
 /**
  * Created by Dhankher on 12/23/2016.
  */
 
 public class ChatHeadService extends Service {
+
+    String TAG = "PAWAN";
     WindowManager windowManager;
-    View view;
-    private String TAG = ChatHeadService.class.getCanonicalName();
-
-    double defaultOpenPositionX;
-    double defaultOpenPositionY;
-    Float lastPositionX;
-    Float lastPositionY;
-    Float x;
-    Float y;
-
-    boolean isOpen = true;
+    LayoutInflater inflater;
+    FrameLayout chatHead, removeView;
+    View circle, removeImg;
+    double radius;
+    int x;
+    int y;
+    int statusBarHeight, screenWidth;
 
     @Nullable
     @Override
@@ -37,119 +41,100 @@ public class ChatHeadService extends Service {
         return null;
     }
 
-    private int radius;
-    private int halfScreen;
-    int statusBarHeight;
-
-
     @Override
     public void onCreate() {
         super.onCreate();
-
-
-        view = LayoutInflater.from(getBaseContext()).inflate(R.layout.messenger_views, null);
-        final View circle = view.findViewById(R.id.circle);
-        final View chatView = view.findViewById(R.id.chat_view);
-        final View closeView = view.findViewById(R.id.close_view);
-
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_TOAST,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                PixelFormat.TRANSLUCENT);
-        // params.gravity = Gravity.TOP | Gravity.RIGHT;
-        // params.x = 0;
-        // params.y = 100;
-        windowManager.addView(view, params);
-
         statusBarHeight = getStatusBarHeight();
-        circle.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                radius = circle.getWidth() / 2;
-            }
-        });
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                halfScreen = view.getWidth() / 2;
-            }
-        });
+        Display display = windowManager.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        screenWidth = size.x;
 
-            view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener(){
+        inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        chatHead = (FrameLayout) inflater.inflate(R.layout.chatheadview, null);
+        circle = chatHead.findViewById(R.id.circle);
+        final WindowManager.LayoutParams headparams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+        headparams.gravity = Gravity.TOP | Gravity.LEFT;
+        headparams.x = 0;
+        headparams.y = 100;
+        windowManager.addView(chatHead, headparams);
 
-                @Override
-                public void onGlobalLayout() {
-                    defaultOpenPositionY = view.getHeight() /10;
-                    defaultOpenPositionX = view.getWidth();
-                }
-            });
+        removeView = (FrameLayout) inflater.inflate(R.layout.removeview, null);
+        removeImg = removeView.findViewById(R.id.removeimg);
 
+        WindowManager.LayoutParams removeparams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+        removeparams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        windowManager.addView(removeView, removeparams);
 
-        circle.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View chatHead) {
-                if (isOpen) {
-                    chatHead.setX((float) defaultOpenPositionX-(2*radius));
-                    chatHead.setY((float) defaultOpenPositionY);
-//                    lastPositionX = chatHead.getX();
-//                    lastPositionY = chatHead.getY();
-                      chatView.setVisibility(View.VISIBLE);
-                    isOpen = false;
-                } else {
-
-//                    chatHead.setX(lastPositionX);
-//                    chatHead.setY(lastPositionY);
-                        chatView.setVisibility(View.GONE);
-                    isOpen = true;
-
-                }
-            }
-        });
-
-        circle.setOnTouchListener(new View.OnTouchListener() {
+        chatHead.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Log.d(TAG, "onTouch: ");
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-//                        closeView.setVisibility(View.VISIBLE);
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        x = (event.getRawX() - radius);
-                        circle.setX(x);
-                        y = (event.getRawY() - radius - statusBarHeight);
-                        circle.setY(y);
-                        chatView.setVisibility(View.GONE);
+                        Log.d(TAG, "onTouch: ");
+                        x = (int) event.getRawX();
+                        y = (int) event.getRawY();
+                        headparams.x = (int) (x - radius);
+                        headparams.y = (int) (y - statusBarHeight - radius);
+                        windowManager.updateViewLayout(chatHead, headparams);
                         break;
                     case MotionEvent.ACTION_UP:
-                        if (x <= halfScreen) {
-                            circle.setX(0f);
-                            circle.setY(y);
-                        } else if (x > halfScreen) {
-                            circle.setX(2 * halfScreen - (radius * 2));
-                            circle.setY(y);
+                        Log.d(TAG, "onTouch: " + screenWidth);
+                        if (x < (screenWidth / 2)) {
+                            x = 0;
+                        } else {
+                            x = (int) (screenWidth - 2 * radius);
                         }
-
-                        closeView.setVisibility(View.GONE);
+                        headparams.x = x;
+                        windowManager.updateViewLayout(chatHead, headparams);
+                        removeView.setVisibility(View.GONE);
                         break;
                 }
                 return false;
             }
         });
-        circle.setOnLongClickListener(new View.OnLongClickListener() {
+
+        chatHead.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                closeView.setVisibility(View.VISIBLE);
+                removeView.setVisibility(View.VISIBLE);
                 return false;
             }
         });
-    }
 
+        chatHead.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    chatHead.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                } else {
+                    chatHead.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                }
+
+                radius = chatHead.getWidth() / 2;
+            }
+        });
+
+
+    }
 
     public int getStatusBarHeight() {
         int result = 0;
@@ -159,4 +144,118 @@ public class ChatHeadService extends Service {
         }
         return result;
     }
+
+
 }
+
+
+//    WindowManager windowManager;
+//    View view;
+//    private String TAG = ChatHeadService.class.getCanonicalName();
+
+
+//
+//    double defaultOpenPositionX;
+//    double defaultOpenPositionY;
+//    Float lastPositionX;
+//    Float lastPositionY;
+//    int x;
+//    int y;
+//
+//    boolean isOpen = true;
+//
+//    @Nullable
+//    @Override
+//    public IBinder onBind(Intent intent) {
+//        return null;
+//    }
+//
+//    private int radius;
+//    private int halfScreen;
+//    int statusBarHeight;
+//    WindowManager.LayoutParams params;
+//
+//    @Override
+//    public void onCreate() {
+//        super.onCreate();
+//
+//
+//        view = LayoutInflater.from(getBaseContext()).inflate(R.layout.chatheadview, null);
+//        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+//
+//        params = new WindowManager.LayoutParams(
+//                WindowManager.LayoutParams.WRAP_CONTENT,
+//                WindowManager.LayoutParams.WRAP_CONTENT,
+//                WindowManager.LayoutParams.TYPE_TOAST,
+//                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//                PixelFormat.TRANSLUCENT);
+//        params.gravity = Gravity.TOP | Gravity.LEFT;
+//        windowManager.addView(view, params);
+//
+//        statusBarHeight = getStatusBarHeight();
+//
+//        halfScreen = windowManager.getDefaultDisplay().getWidth();
+//
+//        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//                    view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+//                } else {
+//                    view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+//                }
+//
+//                radius = view.getWidth() / 2;
+//                defaultOpenPositionY = view.getHeight() / 10;
+//                defaultOpenPositionX = view.getWidth();
+//            }
+//        });
+//
+//
+//        view.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                Log.d(TAG, "onTouch: ");
+//                switch (event.getAction()) {
+//                    case MotionEvent.ACTION_DOWN:
+//
+//                        break;
+//                    case MotionEvent.ACTION_MOVE:
+//                        x = (int) (event.getRawX() - radius);
+//                        y = (int) (event.getRawY() - radius - statusBarHeight);
+//
+//                        params.x = x;
+//                        params.y = y;
+//                        windowManager.updateViewLayout(view, params);
+//
+//                        break;
+//                    case MotionEvent.ACTION_UP:
+//
+//                        if (event.getRawX() <= halfScreen) {
+//                            x = 0;
+//                        } else if (event.getRawX() > halfScreen) {
+//                            x = 2 * halfScreen - (radius * 2);
+//                        }
+//                        y = (int) event.getRawY();
+//
+//
+//                        params.x = x;
+//                        params.y = y;
+//
+//                        windowManager.updateViewLayout(view, params);
+//                        break;
+//                }
+//                return false;
+//            }
+//        });
+//    }
+//
+//    public int getStatusBarHeight() {
+//        int result = 0;
+//        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+//        if (resourceId > 0) {
+//            result = getResources().getDimensionPixelSize(resourceId);
+//        }
+//        return result;
+//    }
+//}

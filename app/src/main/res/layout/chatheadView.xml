@@ -1,0 +1,13 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="60dp"
+    android:layout_height="60dp"
+    android:clickable="true">
+
+
+    <View
+        android:id="@+id/circle"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@drawable/circle_view" />
+
+</FrameLayout>
