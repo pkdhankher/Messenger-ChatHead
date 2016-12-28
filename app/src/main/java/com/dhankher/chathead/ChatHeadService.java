@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.print.PrintAttributes;
 import android.support.annotation.Nullable;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 
 /**
@@ -33,7 +35,10 @@ public class ChatHeadService extends Service {
     double radius;
     int x;
     int y;
-    int statusBarHeight, screenWidth;
+    int statusBarHeight, screenWidth, screenHeight;
+    int lastPositionX, lastPositionY;
+    boolean onClick = false;
+    WindowManager.LayoutParams headparams, removeparams;
 
     @Nullable
     @Override
@@ -51,11 +56,13 @@ public class ChatHeadService extends Service {
         Point size = new Point();
         display.getSize(size);
         screenWidth = size.x;
+        screenHeight = size.y;
+
 
         inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         chatHead = (FrameLayout) inflater.inflate(R.layout.chatheadview, null);
         circle = chatHead.findViewById(R.id.circle);
-        final WindowManager.LayoutParams headparams = new WindowManager.LayoutParams(
+        headparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
@@ -65,13 +72,13 @@ public class ChatHeadService extends Service {
                 PixelFormat.TRANSLUCENT);
         headparams.gravity = Gravity.TOP | Gravity.LEFT;
         headparams.x = 0;
-        headparams.y = 100;
+        headparams.y = 10;
         windowManager.addView(chatHead, headparams);
 
         removeView = (FrameLayout) inflater.inflate(R.layout.removeview, null);
         removeImg = removeView.findViewById(R.id.removeimg);
 
-        WindowManager.LayoutParams removeparams = new WindowManager.LayoutParams(
+        removeparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
@@ -83,10 +90,24 @@ public class ChatHeadService extends Service {
         windowManager.addView(removeView, removeparams);
 
         chatHead.setOnTouchListener(new View.OnTouchListener() {
+            long startTime, endTime;
+            boolean isLongClick = false;
+            Handler handler_longclick = new Handler();
+            Runnable runnable_longClick = new Runnable() {
+                @Override
+                public void run() {
+                    isLongClick = true;
+                    removeView.setVisibility(View.VISIBLE);
+
+                }
+            };
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        startTime = System.currentTimeMillis();
+                        handler_longclick.postDelayed(runnable_longClick, 600);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         Log.d(TAG, "onTouch: ");
@@ -97,6 +118,7 @@ public class ChatHeadService extends Service {
                         windowManager.updateViewLayout(chatHead, headparams);
                         break;
                     case MotionEvent.ACTION_UP:
+                        isLongClick = false;
                         Log.d(TAG, "onTouch: " + screenWidth);
                         if (x < (screenWidth / 2)) {
                             x = 0;
@@ -105,20 +127,20 @@ public class ChatHeadService extends Service {
                         }
                         headparams.x = x;
                         windowManager.updateViewLayout(chatHead, headparams);
+
+                        isLongClick = false;
                         removeView.setVisibility(View.GONE);
+                        handler_longclick.removeCallbacks(runnable_longClick);
+                        endTime = System.currentTimeMillis();
+                        if (endTime - startTime < 100) {
+                            chatHead_click();
+                        }
                         break;
                 }
                 return false;
             }
         });
 
-        chatHead.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                removeView.setVisibility(View.VISIBLE);
-                return false;
-            }
-        });
 
         chatHead.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -128,12 +150,32 @@ public class ChatHeadService extends Service {
                 } else {
                     chatHead.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                 }
-
                 radius = chatHead.getWidth() / 2;
             }
         });
 
 
+    }
+
+    private void chatHead_click() {
+        //    boolean onClick = false;
+        if (onClick) {
+            headparams.x = lastPositionX;
+            headparams.y = lastPositionY;
+            windowManager.updateViewLayout(chatHead, headparams);
+            onClick = false;
+        } else {
+            lastPositionX = headparams.x;
+            lastPositionY = headparams.y;
+
+            headparams.x = (int) (screenWidth - (2 * radius));
+            headparams.y = 10;
+
+            windowManager.updateViewLayout(chatHead, headparams);
+            onClick = true;
+        }
+
+        Log.d(TAG, "chatHead_click: x: " + headparams.x + ", y: " + headparams.y);
     }
 
     public int getStatusBarHeight() {
@@ -143,119 +185,9 @@ public class ChatHeadService extends Service {
             result = getResources().getDimensionPixelSize(resourceId);
         }
         return result;
+
+
     }
 
 
 }
-
-
-//    WindowManager windowManager;
-//    View view;
-//    private String TAG = ChatHeadService.class.getCanonicalName();
-
-
-//
-//    double defaultOpenPositionX;
-//    double defaultOpenPositionY;
-//    Float lastPositionX;
-//    Float lastPositionY;
-//    int x;
-//    int y;
-//
-//    boolean isOpen = true;
-//
-//    @Nullable
-//    @Override
-//    public IBinder onBind(Intent intent) {
-//        return null;
-//    }
-//
-//    private int radius;
-//    private int halfScreen;
-//    int statusBarHeight;
-//    WindowManager.LayoutParams params;
-//
-//    @Override
-//    public void onCreate() {
-//        super.onCreate();
-//
-//
-//        view = LayoutInflater.from(getBaseContext()).inflate(R.layout.chatheadview, null);
-//        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-//
-//        params = new WindowManager.LayoutParams(
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.WRAP_CONTENT,
-//                WindowManager.LayoutParams.TYPE_TOAST,
-//                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-//                PixelFormat.TRANSLUCENT);
-//        params.gravity = Gravity.TOP | Gravity.LEFT;
-//        windowManager.addView(view, params);
-//
-//        statusBarHeight = getStatusBarHeight();
-//
-//        halfScreen = windowManager.getDefaultDisplay().getWidth();
-//
-//        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @Override
-//            public void onGlobalLayout() {
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//                    view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//                } else {
-//                    view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-//                }
-//
-//                radius = view.getWidth() / 2;
-//                defaultOpenPositionY = view.getHeight() / 10;
-//                defaultOpenPositionX = view.getWidth();
-//            }
-//        });
-//
-//
-//        view.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                Log.d(TAG, "onTouch: ");
-//                switch (event.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//
-//                        break;
-//                    case MotionEvent.ACTION_MOVE:
-//                        x = (int) (event.getRawX() - radius);
-//                        y = (int) (event.getRawY() - radius - statusBarHeight);
-//
-//                        params.x = x;
-//                        params.y = y;
-//                        windowManager.updateViewLayout(view, params);
-//
-//                        break;
-//                    case MotionEvent.ACTION_UP:
-//
-//                        if (event.getRawX() <= halfScreen) {
-//                            x = 0;
-//                        } else if (event.getRawX() > halfScreen) {
-//                            x = 2 * halfScreen - (radius * 2);
-//                        }
-//                        y = (int) event.getRawY();
-//
-//
-//                        params.x = x;
-//                        params.y = y;
-//
-//                        windowManager.updateViewLayout(view, params);
-//                        break;
-//                }
-//                return false;
-//            }
-//        });
-//    }
-//
-//    public int getStatusBarHeight() {
-//        int result = 0;
-//        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-//        if (resourceId > 0) {
-//            result = getResources().getDimensionPixelSize(resourceId);
-//        }
-//        return result;
-//    }
-//}
