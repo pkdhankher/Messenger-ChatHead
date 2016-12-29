@@ -7,7 +7,6 @@ import android.graphics.Point;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
-import android.print.PrintAttributes;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Display;
@@ -18,7 +17,6 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 
 /**
@@ -30,15 +28,16 @@ public class ChatHeadService extends Service {
     String TAG = "PAWAN";
     WindowManager windowManager;
     LayoutInflater inflater;
-    FrameLayout chatHead, removeView;
-    View circle, removeImg;
+    FrameLayout chatHeadLayout, removeLayout, chatLayout;
+    View circleView, removeView, chatView;
     double radius;
     int x;
     int y;
     int statusBarHeight, screenWidth, screenHeight;
     int lastPositionX, lastPositionY;
+    int removeViewX,removeViewY;
     boolean onClick = false;
-    WindowManager.LayoutParams headparams, removeparams;
+    WindowManager.LayoutParams headparams, removeparams, chatviewparams;
 
     @Nullable
     @Override
@@ -60,8 +59,8 @@ public class ChatHeadService extends Service {
 
 
         inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-        chatHead = (FrameLayout) inflater.inflate(R.layout.chatheadview, null);
-        circle = chatHead.findViewById(R.id.circle);
+        chatHeadLayout = (FrameLayout) inflater.inflate(R.layout.chatheadview, null);
+        circleView = chatHeadLayout.findViewById(R.id.circle);
         headparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -73,10 +72,10 @@ public class ChatHeadService extends Service {
         headparams.gravity = Gravity.TOP | Gravity.LEFT;
         headparams.x = 0;
         headparams.y = 10;
-        windowManager.addView(chatHead, headparams);
+        windowManager.addView(chatHeadLayout, headparams);
 
-        removeView = (FrameLayout) inflater.inflate(R.layout.removeview, null);
-        removeImg = removeView.findViewById(R.id.removeimg);
+        removeLayout = (FrameLayout) inflater.inflate(R.layout.removeview, null);
+        removeView = removeLayout.findViewById(R.id.removeimg);
 
         removeparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -87,9 +86,23 @@ public class ChatHeadService extends Service {
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
         removeparams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        windowManager.addView(removeView, removeparams);
+        windowManager.addView(removeLayout, removeparams);
 
-        chatHead.setOnTouchListener(new View.OnTouchListener() {
+        chatLayout = (FrameLayout) inflater.inflate(R.layout.chatview, null);
+        chatView = chatLayout.findViewById(R.id.chat);
+        chatviewparams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+
+        chatviewparams.gravity = Gravity.BOTTOM;
+        windowManager.addView(chatLayout, chatviewparams);
+
+        chatHeadLayout.setOnTouchListener(new View.OnTouchListener() {
             long startTime, endTime;
             boolean isLongClick = false;
             Handler handler_longclick = new Handler();
@@ -97,7 +110,7 @@ public class ChatHeadService extends Service {
                 @Override
                 public void run() {
                     isLongClick = true;
-                    removeView.setVisibility(View.VISIBLE);
+                    removeLayout.setVisibility(View.VISIBLE);
 
                 }
             };
@@ -108,6 +121,7 @@ public class ChatHeadService extends Service {
                     case MotionEvent.ACTION_DOWN:
                         startTime = System.currentTimeMillis();
                         handler_longclick.postDelayed(runnable_longClick, 600);
+                        chatLayout.setVisibility(View.GONE);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         Log.d(TAG, "onTouch: ");
@@ -115,21 +129,41 @@ public class ChatHeadService extends Service {
                         y = (int) event.getRawY();
                         headparams.x = (int) (x - radius);
                         headparams.y = (int) (y - statusBarHeight - radius);
-                        windowManager.updateViewLayout(chatHead, headparams);
+                        windowManager.updateViewLayout(chatHeadLayout, headparams);
+
+                        removeViewX = (int) (screenWidth / 2 - radius);
+                        removeViewY = (int) (screenHeight*9/10+radius);
+
+//                        removeViewY = removeparams.y;
+//                        removeViewX = removeparams.x;
+
+                        Log.d(TAG, "onTouch: x: " + x + ", removeViewX: " + removeViewX);
+                        if ((x > (removeViewX - 50) && x < (removeViewX + 50 + (radius * 2)))&&(y>(removeViewY-50) && y<(removeViewY+50))) {
+                            circleView.setBackgroundResource(R.drawable.circle_view_red);
+                        } else {
+                            circleView.setBackgroundResource(R.drawable.circle_view);
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
                         isLongClick = false;
+                        if ((x > (removeViewX - 50) && x < (removeViewX + 50 + (radius * 2)))&&(y>(removeViewY-50) && y<(removeViewY+50))) {
+                            windowManager.removeView(chatHeadLayout);
+                            windowManager.removeView(chatLayout);
+                            windowManager.removeView(removeLayout);
+                            stopSelf();
+                        }
                         Log.d(TAG, "onTouch: " + screenWidth);
+
                         if (x < (screenWidth / 2)) {
                             x = 0;
                         } else {
                             x = (int) (screenWidth - 2 * radius);
                         }
                         headparams.x = x;
-                        windowManager.updateViewLayout(chatHead, headparams);
+                        windowManager.updateViewLayout(chatHeadLayout, headparams);
 
                         isLongClick = false;
-                        removeView.setVisibility(View.GONE);
+                        removeLayout.setVisibility(View.GONE);
                         handler_longclick.removeCallbacks(runnable_longClick);
                         endTime = System.currentTimeMillis();
                         if (endTime - startTime < 100) {
@@ -142,15 +176,15 @@ public class ChatHeadService extends Service {
         });
 
 
-        chatHead.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        chatHeadLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    chatHead.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    chatHeadLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 } else {
-                    chatHead.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    chatHeadLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                 }
-                radius = chatHead.getWidth() / 2;
+                radius = chatHeadLayout.getWidth() / 2;
             }
         });
 
@@ -162,7 +196,8 @@ public class ChatHeadService extends Service {
         if (onClick) {
             headparams.x = lastPositionX;
             headparams.y = lastPositionY;
-            windowManager.updateViewLayout(chatHead, headparams);
+            windowManager.updateViewLayout(chatHeadLayout, headparams);
+            chatLayout.setVisibility(View.GONE);
             onClick = false;
         } else {
             lastPositionX = headparams.x;
@@ -171,7 +206,8 @@ public class ChatHeadService extends Service {
             headparams.x = (int) (screenWidth - (2 * radius));
             headparams.y = 10;
 
-            windowManager.updateViewLayout(chatHead, headparams);
+            windowManager.updateViewLayout(chatHeadLayout, headparams);
+            chatLayout.setVisibility(View.VISIBLE);
             onClick = true;
         }
 
@@ -191,3 +227,4 @@ public class ChatHeadService extends Service {
 
 
 }
+
