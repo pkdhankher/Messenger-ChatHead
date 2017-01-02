@@ -1,42 +1,99 @@
 package com.dhankher.chathead;
 
-import android.Manifest;
 import android.app.Activity;
-import android.app.Service;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
+import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.MotionEvent;
+import android.text.Html;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
+    TableLayout tab;
+    NotificationCompat.Builder mBuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
 
 //        if (android.os.Build.VERSION.SDK_INT >= 23) {   //Android M Or Over
 //            if (!Settings.canDrawOverlays(this)) {
+//                return;
 //                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
 //                startActivityForResult(intent, 1);
-//                return;
 //            }
 //        }
 
-        startService(new Intent(MainActivity.this, ChatHeadService.class));
 
+//        Intent intent=new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+//        startActivity(intent);
+
+        mBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Title")
+                .setContentText("Dummy Notification");
+
+        startService(new Intent(MainActivity.this, NotificationService.class));
+
+        tab = (TableLayout) findViewById(R.id.tab);
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+
+
+    }
+
+
+    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            String title = intent.getStringExtra("title");
+            String text = intent.getStringExtra("text");
+
+
+            TableRow tr = new TableRow(getApplicationContext());
+            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
+            TextView textview = new TextView(getApplicationContext());
+            textview.setLayoutParams(new TableRow.LayoutParams(
+                    TableRow.LayoutParams.WRAP_CONTENT,
+                    TableRow.LayoutParams.WRAP_CONTENT, 1.0f));
+            textview.setTextSize(20);
+            textview.setTextColor(Color.parseColor("#0B0719"));
+            textview.setText(Html.fromHtml(pack + "<br><b>" + title + " : </b>" + text));
+            tr.addView(textview);
+            tab.addView(tr);
+
+
+        }
+    };
+
+
+    public void onClick(View view) {
+
+        startService(new Intent(MainActivity.this, ChatHeadService.class));
         finish();
     }
+
+    public void onStart(View view) {
+        int mNotificationId = 001;
+        NotificationManager mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mNotifyMgr.notify(mNotificationId, mBuilder.build());
+    }
+
 
 }
