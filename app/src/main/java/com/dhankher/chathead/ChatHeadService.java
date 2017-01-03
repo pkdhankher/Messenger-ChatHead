@@ -13,6 +13,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -24,6 +26,8 @@ import android.view.WindowManager;
 import android.view.animation.AnimationSet;
 import android.widget.FrameLayout;
 
+import java.util.ArrayList;
+
 import static android.animation.ValueAnimator.ofFloat;
 
 
@@ -32,12 +36,14 @@ import static android.animation.ValueAnimator.ofFloat;
  */
 
 public class ChatHeadService extends Service {
+    ArrayList<Item> feedlist;
 
     String TAG = "PAWAN";
     WindowManager windowManager;
     LayoutInflater inflater;
     FrameLayout chatHeadLayout, removeLayout, chatLayout;
-    View circleView, removeView, chatView;
+    View circleView, removeView;
+    RecyclerView chatView;
     double radius;
     int x;
     int y;
@@ -97,16 +103,17 @@ public class ChatHeadService extends Service {
         windowManager.addView(removeLayout, removeparams);
 
         chatLayout = (FrameLayout) inflater.inflate(R.layout.chatview, null);
-        chatView = chatLayout.findViewById(R.id.chat);
+        chatView = (RecyclerView) chatLayout.findViewById(R.id.recyclerView);
+//        chatView = chatLayout.findViewById(R.id.chat);
         chatviewparams = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
-
+      //  FLAG_ACTIVITY_NEW_TASK
         chatviewparams.gravity = Gravity.BOTTOM;
         windowManager.addView(chatLayout, chatviewparams);
 
@@ -213,6 +220,8 @@ public class ChatHeadService extends Service {
             headparams.x = (int) (screenWidth - (2 * radius));
             headparams.y = 10;
             windowManager.updateViewLayout(chatHeadLayout, headparams);
+            chatLayout.setVisibility(View.VISIBLE);
+   //         startActivity(new Intent(ChatHeadService.this,ChatView.class));
 //            final int intialX = headparams.x;
 //            final int intialY = headparams.y;
 //
@@ -285,14 +294,6 @@ public class ChatHeadService extends Service {
 
 
 }
-
-
-
-
-
-
-
-
 
 
 //            ObjectAnimator animX = ObjectAnimator.ofFloat(headparams.x, "headparams.x", finalX);
