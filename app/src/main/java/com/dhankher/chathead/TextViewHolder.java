@@ -14,7 +14,7 @@ public class TextViewHolder extends RecyclerView.ViewHolder implements BindableI
     TextView tv;
     public TextViewHolder(View view){
         super(view);
-        tv = (TextView) view.findViewById(R.id.tv);
+        tv = (TextView) view.findViewById(R.id.tvRecycle);
 
     }
 

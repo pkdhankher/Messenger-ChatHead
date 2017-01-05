@@ -4,8 +4,7 @@
     android:layout_height="match_parent"
     android:layout_below="@id/circle"
     android:background="@drawable/chat_view"
-    android:orientation="vertical"
-    android:visibility="gone">
+>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"

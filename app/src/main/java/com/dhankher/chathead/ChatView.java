@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -25,7 +26,6 @@ import java.util.List;
 public class ChatView extends AppCompatActivity {
 
     RecyclerView rv;
-    List<Item> feedlist;
     AdapterClass adapterClass;
     ImageItem imageItem;
     TextItem textItem;
@@ -35,36 +35,29 @@ public class ChatView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.chatview);
+   //     setContentView(R.layout.chatview);
 
         rv = (RecyclerView) findViewById(R.id.recyclerView);
 
         rv.setLayoutManager(new LinearLayoutManager(this));
-        feedlist = new ArrayList<>();
-        adapterClass=new AdapterClass(this,feedlist);
+        List<Item> feedlist = new ArrayList<>();
+        adapterClass = new AdapterClass(this, feedlist);
         rv.setAdapter(adapterClass);
 
         LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
-//        rv = (RecyclerView) findViewById(R.id.recyclerView);
+        textItem = new TextItem();
+        textItem.setTitle(title + " : </b>" + text);
+        feedlist.add(textItem);
 
+        imageItem = new ImageItem();
+        imageItem.setThumbnail("http://inthecheesefactory.com/uploads/source/glidepicasso/cover.jpg");
+        feedlist.add(imageItem);
 
-            textItem = new TextItem();
-
-            textItem.setTitle(title);
-            feedlist.add(textItem);
-
-
-            imageItem = new ImageItem();
-            imageItem.setThumbnail("http://inthecheesefactory.com/uploads/source/glidepicasso/cover.jpg");
-            feedlist.add(imageItem);
-
-
-
+        adapterClass.notifyDataSetChanged();
 //       feedlist.add(textItem);
 //       feedlist.add(imageItem);
 
-        adapterClass = new AdapterClass(this, feedlist);
 
     }
 

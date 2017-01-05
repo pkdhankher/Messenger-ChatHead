@@ -23,7 +23,7 @@ public class ImageItem extends Item{
     }
 
     public static RecyclerView.ViewHolder createViewHolder(Context context) {
-        return new ImageViewHolder(LayoutInflater.from(context).inflate(R.layout.image_layout,null));
+        return new ImageViewHolder(LayoutInflater.from(context).inflate(R.layout.recycler_layouts,null));
     }
 
 }

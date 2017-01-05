@@ -7,12 +7,14 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -27,6 +29,7 @@ import android.view.animation.AnimationSet;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static android.animation.ValueAnimator.ofFloat;
 
@@ -43,7 +46,7 @@ public class ChatHeadService extends Service {
     LayoutInflater inflater;
     FrameLayout chatHeadLayout, removeLayout, chatLayout;
     View circleView, removeView;
-    RecyclerView chatView;
+    RecyclerView rv;
     double radius;
     int x;
     int y;
@@ -103,17 +106,36 @@ public class ChatHeadService extends Service {
         windowManager.addView(removeLayout, removeparams);
 
         chatLayout = (FrameLayout) inflater.inflate(R.layout.chatview, null);
-        chatView = (RecyclerView) chatLayout.findViewById(R.id.recyclerView);
+        rv = (RecyclerView) chatLayout.findViewById(R.id.recyclerView);
+
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        List<Item> feedlist = new ArrayList<>();
+        AdapterClass adapterClass = new AdapterClass(this, feedlist);
+        rv.setAdapter(adapterClass);
+
+
+//      rv = (RecyclerView) findViewById(R.id.recyclerView);
+
+TextItem        textItem = new TextItem();
+        textItem.setTitle("title");
+
+        feedlist.add(textItem);
+
+        ImageItem imageItem = new ImageItem();
+        imageItem.setThumbnail("http://inthecheesefactory.com/uploads/source/glidepicasso/cover.jpg");
+        feedlist.add(imageItem);
+
+        adapterClass.notifyDataSetChanged();
 //        chatView = chatLayout.findViewById(R.id.chat);
         chatviewparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
-      //  FLAG_ACTIVITY_NEW_TASK
+        //  FLAG_ACTIVITY_NEW_TASK
         chatviewparams.gravity = Gravity.BOTTOM;
         windowManager.addView(chatLayout, chatviewparams);
 
@@ -221,7 +243,7 @@ public class ChatHeadService extends Service {
             headparams.y = 10;
             windowManager.updateViewLayout(chatHeadLayout, headparams);
             chatLayout.setVisibility(View.VISIBLE);
-   //         startActivity(new Intent(ChatHeadService.this,ChatView.class));
+            startActivity(new Intent(ChatHeadService.this, ChatView.class));
 //            final int intialX = headparams.x;
 //            final int intialY = headparams.y;
 //

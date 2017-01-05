@@ -15,7 +15,7 @@ public class ImageViewHolder extends RecyclerView.ViewHolder implements Bindable
     private String TAG = getClass().getCanonicalName();
     public ImageViewHolder(View view){
         super(view);
-        iv = (ImageView) view.findViewById(R.id.iv);
+        iv = (ImageView) view.findViewById(R.id.ivRecycleView);
         Log.d(TAG, "ImageViewHolder: mkn");
     }
 

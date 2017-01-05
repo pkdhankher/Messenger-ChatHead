@@ -28,6 +28,6 @@ public class TextItem extends Item {
 
 
     public static RecyclerView.ViewHolder createViewHolder(Context context) {
-        return new TextViewHolder(LayoutInflater.from(context).inflate(R.layout.text_layout,null));
+        return new TextViewHolder(LayoutInflater.from(context).inflate(R.layout.recycler_layouts,null));
     }
 }
