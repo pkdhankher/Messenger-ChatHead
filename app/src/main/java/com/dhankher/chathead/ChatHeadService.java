@@ -45,6 +45,7 @@ import static android.R.id.list;
  */
 
 public class ChatHeadService extends Service {
+    ArrayList<Item> feedlist;
 
     String TAG = "PAWAN";
     WindowManager windowManager;
@@ -134,7 +135,7 @@ public class ChatHeadService extends Service {
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
-
+        //  FLAG_ACTIVITY_NEW_TASK
         chatviewparams.gravity = Gravity.BOTTOM;
         windowManager.addView(chatLayout, chatviewparams);
 
