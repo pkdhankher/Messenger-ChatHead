@@ -16,6 +16,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.util.Log;
 import android.view.Display;
@@ -32,6 +34,11 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static android.R.id.list;
+
 
 /**
  * Created by Dhankher on 12/23/2016.
@@ -44,6 +51,7 @@ public class ChatHeadService extends Service {
     LayoutInflater inflater;
     FrameLayout chatHeadLayout, removeLayout, chatLayout, imgframe;
     TableLayout tableLayout;
+    RecyclerView recyclerView;
     ImageView circleImage, removeImage;
     double radius;
     int x;
@@ -53,10 +61,12 @@ public class ChatHeadService extends Service {
     //    int removeViewX = (int) (screenWidth / 2 - radius), removeViewY = (int) (screenHeight * 9 / 10 + radius);
     int removeViewX = 295, removeViewY = 1068;
     boolean onClick = false;
-    boolean inCircle = false;
     WindowManager.LayoutParams headparams, removeparams, chatviewparams;
     private boolean isNearToRemoveView = false;
     ObjectAnimator objectAnimatorTowardsRemoveView, objectAnimatorAwayFromRemoveView;
+    AdapterClass adapterclass;
+    List<String> list;
+    String title,text;
 
 
     @Nullable
@@ -111,7 +121,8 @@ public class ChatHeadService extends Service {
         Log.i("removeX: " + removeparams.x, "removeparmsY" + removeparams.y);
 
         chatLayout = (FrameLayout) inflater.inflate(R.layout.chatview, null);
-        tableLayout = (TableLayout) chatLayout.findViewById(R.id.tab);
+        recyclerView = (RecyclerView) chatLayout.findViewById(R.id.rvView);
+        // tableLayout = (TableLayout) chatLayout.findViewById(R.id.tab);
 
         LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
@@ -321,6 +332,13 @@ public class ChatHeadService extends Service {
             }
         });
 
+        list = new ArrayList<>();
+        list.add(title);
+        list.add(text);
+        adapterclass = new AdapterClass(this, list);
+        recyclerView.setAdapter(adapterclass);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
 
     }
 
@@ -445,24 +463,25 @@ public class ChatHeadService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String pack = intent.getStringExtra("package");
-            String title = intent.getStringExtra("title");
-            String text = intent.getStringExtra("text");
+             title = intent.getStringExtra("title");
+             text = intent.getStringExtra("text");
             Integer image = intent.getIntExtra("image", 0);
 
-            TableRow tr = new TableRow(getApplicationContext());
-            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
-            TextView textview = new TextView(getApplicationContext());
-            textview.setLayoutParams(new TableRow.LayoutParams(
-                    TableRow.LayoutParams.WRAP_CONTENT,
-                    TableRow.LayoutParams.WRAP_CONTENT, 1.0f));
-            textview.setTextSize(20);
-            textview.setTextColor(Color.parseColor("#0B0719"));
-            textview.setText(Html.fromHtml(pack + "<br><b>" + title + " : </b>" + text));
-            ImageView imageView = new ImageView(getApplicationContext());
-            imageView.setImageResource(image);
-            tr.addView(imageView);
-            tr.addView(textview);
-            tableLayout.addView(tr);
+
+//            TableRow tr = new TableRow(getApplicationContext());
+//            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
+//            TextView textview = new TextView(getApplicationContext());
+//            textview.setLayoutParams(new TableRow.LayoutParams(
+//                    TableRow.LayoutParams.WRAP_CONTENT,
+//                    TableRow.LayoutParams.WRAP_CONTENT, 1.0f));
+//            textview.setTextSize(20);
+//            textview.setTextColor(Color.parseColor("#0B0719"));
+//            textview.setText(Html.fromHtml(pack + "<br><b>" + title + " : </b>" + text));
+//            ImageView imageView = new ImageView(getApplicationContext());
+//            imageView.setImageResource(image);
+//            tr.addView(imageView);
+//            tr.addView(textview);
+//            tableLayout.addView(tr);
         }
     };
 
