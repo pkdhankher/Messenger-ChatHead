@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Build;
@@ -18,7 +17,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -31,13 +29,9 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.R.id.list;
 
 
 /**
@@ -45,7 +39,6 @@ import static android.R.id.list;
  */
 
 public class ChatHeadService extends Service {
-    ArrayList<Item> feedlist;
 
     String TAG = "PAWAN";
     WindowManager windowManager;
@@ -63,12 +56,38 @@ public class ChatHeadService extends Service {
     int removeViewX = 295, removeViewY = 1068;
     boolean onClick = false;
     WindowManager.LayoutParams headparams, removeparams, chatviewparams;
-    private boolean isNearToRemoveView = false;
     ObjectAnimator objectAnimatorTowardsRemoveView, objectAnimatorAwayFromRemoveView;
     AdapterClass adapterclass;
     List<String> list;
     String title,text;
+    private boolean isNearToRemoveView = false;
 
+    private BroadcastReceiver onNotice = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pack = intent.getStringExtra("package");
+            title = intent.getStringExtra("title");
+            text = intent.getStringExtra("text");
+            Integer image = intent.getIntExtra("image", 0);
+
+
+//            TableRow tr = new TableRow(getApplicationContext());
+//            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
+//            TextView textview = new TextView(getApplicationContext());
+//            textview.setLayoutParams(new TableRow.LayoutParams(
+//                    TableRow.LayoutParams.WRAP_CONTENT,
+//                    TableRow.LayoutParams.WRAP_CONTENT, 1.0f));
+//            textview.setTextSize(20);
+//            textview.setTextColor(Color.parseColor("#0B0719"));
+//            textview.setText(Html.fromHtml(pack + "<br><b>" + title + " : </b>" + text));
+//            ImageView imageView = new ImageView(getApplicationContext());
+//            imageView.setImageResource(image);
+//            tr.addView(imageView);
+//            tr.addView(textview);
+//            tableLayout.addView(tr);
+        }
+    };
 
     @Nullable
     @Override
@@ -457,35 +476,6 @@ public class ChatHeadService extends Service {
 
         Log.d(TAG, "chatHead_click: x: " + headparams.x + ", y: " + headparams.y);
     }
-
-
-    private BroadcastReceiver onNotice = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String pack = intent.getStringExtra("package");
-             title = intent.getStringExtra("title");
-             text = intent.getStringExtra("text");
-            Integer image = intent.getIntExtra("image", 0);
-
-
-//            TableRow tr = new TableRow(getApplicationContext());
-//            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
-//            TextView textview = new TextView(getApplicationContext());
-//            textview.setLayoutParams(new TableRow.LayoutParams(
-//                    TableRow.LayoutParams.WRAP_CONTENT,
-//                    TableRow.LayoutParams.WRAP_CONTENT, 1.0f));
-//            textview.setTextSize(20);
-//            textview.setTextColor(Color.parseColor("#0B0719"));
-//            textview.setText(Html.fromHtml(pack + "<br><b>" + title + " : </b>" + text));
-//            ImageView imageView = new ImageView(getApplicationContext());
-//            imageView.setImageResource(image);
-//            tr.addView(imageView);
-//            tr.addView(textview);
-//            tableLayout.addView(tr);
-        }
-    };
-
 
     public int getStatusBarHeight() {
         int result = 0;
