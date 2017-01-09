@@ -56,6 +56,7 @@ public class ChatHeadService extends Service {
     boolean inCircle = false;
     WindowManager.LayoutParams headparams, removeparams, chatviewparams;
     private boolean isNearToRemoveView = false;
+    ObjectAnimator objectAnimatorTowardsRemoveView, objectAnimatorAwayFromRemoveView;
 
 
     @Nullable
@@ -135,7 +136,6 @@ public class ChatHeadService extends Service {
                 public void run() {
                     isLongClick = true;
                     removeLayout.setVisibility(View.VISIBLE);
-
                 }
             };
 
@@ -151,10 +151,9 @@ public class ChatHeadService extends Service {
                         Log.d(TAG, "onTouch: ");
                         x = (int) event.getRawX();
                         y = (int) event.getRawY();
+
                         headparams.x = (int) (x - radius);
                         headparams.y = (int) (y - statusBarHeight - radius);
-//                       windowManager.updateViewLayout(chatHeadLayout,headparams);
-
                         if ((x > (removeViewX - 120) && x < (removeViewX + 120 + (radius * 2))) && (y > (removeViewY - 120) && y < (removeViewY + 120))) {
 
                             if (isNearToRemoveView == false) {
@@ -165,11 +164,11 @@ public class ChatHeadService extends Service {
                                 final int finalY = removeViewY;
                                 final float diffX = finalX - initialX;
                                 final float diffY = finalY - initialY;
-                                ObjectAnimator objectAnimator = new ObjectAnimator();
-                                objectAnimator.setDuration(300);
-                                objectAnimator.setFloatValues(0, 100);
-                                objectAnimator.setInterpolator(new OvershootInterpolator());
-                                objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                objectAnimatorTowardsRemoveView = new ObjectAnimator();
+                                objectAnimatorTowardsRemoveView.setDuration(100);
+                                objectAnimatorTowardsRemoveView.setFloatValues(0, 100);
+                                objectAnimatorTowardsRemoveView.setInterpolator(new OvershootInterpolator());
+                                objectAnimatorTowardsRemoveView.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                                     @Override
                                     public void onAnimationUpdate(ValueAnimator animation) {
                                         float value = (float) animation.getAnimatedValue();
@@ -180,7 +179,7 @@ public class ChatHeadService extends Service {
                                         windowManager.updateViewLayout(chatHeadLayout, headparams);
                                     }
                                 });
-                                objectAnimator.addListener(new Animator.AnimatorListener() {
+                                objectAnimatorTowardsRemoveView.addListener(new Animator.AnimatorListener() {
                                     @Override
                                     public void onAnimationStart(Animator animation) {
 
@@ -201,24 +200,25 @@ public class ChatHeadService extends Service {
 
                                     }
                                 });
-                                objectAnimator.start();
+                                objectAnimatorTowardsRemoveView.start();
                                 isNearToRemoveView = true;
                             }
 
                         } else {
-
-                            if (isNearToRemoveView==true) {
+                            if (isNearToRemoveView == true) {
                                 final int initialX = removeViewX;
                                 final int initialY = removeViewY;
+
                                 final int finalX = headparams.x;
                                 final int finalY = headparams.y;
+
                                 final float diffX = finalX - initialX;
                                 final float diffY = finalY - initialY;
-                                ObjectAnimator objectAnimator = new ObjectAnimator();
-                                objectAnimator.setDuration(300);
-                                objectAnimator.setFloatValues(0, 100);
-                                objectAnimator.setInterpolator(new OvershootInterpolator());
-                                objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+                                objectAnimatorAwayFromRemoveView = new ObjectAnimator();
+                                objectAnimatorAwayFromRemoveView.setDuration(100);
+                                objectAnimatorAwayFromRemoveView.setFloatValues(0, 100);
+                                objectAnimatorAwayFromRemoveView.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                                     @Override
                                     public void onAnimationUpdate(ValueAnimator animation) {
                                         float value = (float) animation.getAnimatedValue();
@@ -226,18 +226,14 @@ public class ChatHeadService extends Service {
                                         float currentY = initialY + (diffY * value / 100);
                                         headparams.x = (int) currentX;
                                         headparams.y = (int) currentY;
-                                        windowManager.updateViewLayout(chatLayout, headparams);
-                                        removeImage.animate().scaleX(1f).scaleY(1f).setDuration(5);
+                                        windowManager.updateViewLayout(chatHeadLayout, headparams);
                                     }
                                 });
-                                objectAnimator.start();
+                                removeImage.animate().scaleX(1f).scaleY(1f).setDuration(5);
+                                objectAnimatorAwayFromRemoveView.start();
                                 isNearToRemoveView = false;
-                            }
-                            else {
-
-                              windowManager.updateViewLayout(chatHeadLayout, headparams);
-
-
+                            } else {
+                                windowManager.updateViewLayout(chatHeadLayout, headparams);
                             }
                         }
 
@@ -246,6 +242,11 @@ public class ChatHeadService extends Service {
                         isLongClick = false;
 
                         if ((x > (removeViewX - 120) && x < (removeViewX + 120 + (radius * 2))) && (y > (removeViewY - 120) && y < (removeViewY + 120))) {
+                            objectAnimatorTowardsRemoveView.removeAllUpdateListeners();
+                            objectAnimatorTowardsRemoveView.removeAllListeners();
+                            objectAnimatorAwayFromRemoveView.removeAllUpdateListeners();
+
+
                             windowManager.removeView(chatHeadLayout);
                             windowManager.removeView(chatLayout);
                             windowManager.removeView(removeLayout);
@@ -331,6 +332,7 @@ public class ChatHeadService extends Service {
 
             final int finalX = lastPositionX;
             final int finalY = lastPositionY;
+
             final float diffX = finalX - intialX;
             final float diffY = finalY - intialY;
 
@@ -431,8 +433,6 @@ public class ChatHeadService extends Service {
                 }
             });
             objectAnimator.start();
-
-
             onClick = true;
         }
 
