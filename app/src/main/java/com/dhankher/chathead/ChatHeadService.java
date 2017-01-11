@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Build;
@@ -17,6 +18,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -29,6 +31,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TableLayout;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,17 +62,9 @@ public class ChatHeadService extends Service {
     ObjectAnimator objectAnimatorTowardsRemoveView, objectAnimatorAwayFromRemoveView;
     AdapterClass adapterclass;
     List<String> list;
-    String title,text;
+    String title, text,string;
+    TextView textView;
     private boolean isNearToRemoveView = false;
-
-    private BroadcastReceiver onNotice = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String pack = intent.getStringExtra("package");
-            title = intent.getStringExtra("title");
-            text = intent.getStringExtra("text");
-            Integer image = intent.getIntExtra("image", 0);
 
 
 //            TableRow tr = new TableRow(getApplicationContext());
@@ -86,8 +81,9 @@ public class ChatHeadService extends Service {
 //            tr.addView(imageView);
 //            tr.addView(textview);
 //            tableLayout.addView(tr);
-        }
-    };
+
+//        }
+//    };
 
     @Nullable
     @Override
@@ -144,7 +140,7 @@ public class ChatHeadService extends Service {
         recyclerView = (RecyclerView) chatLayout.findViewById(R.id.rvView);
         // tableLayout = (TableLayout) chatLayout.findViewById(R.id.tab);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
+
 
         chatviewparams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -336,7 +332,6 @@ public class ChatHeadService extends Service {
             }
         });
 
-
         chatHeadLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -351,16 +346,71 @@ public class ChatHeadService extends Service {
 //                removeViewY = (int) (screenHeight * 9 / 10 + radius);
             }
         });
+        BroadcastReceiver onNotice = new BroadcastReceiver() {
 
-        list = new ArrayList<>();
-        list.add(title);
-        list.add(text);
-        adapterclass = new AdapterClass(this, list);
-        recyclerView.setAdapter(adapterclass);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String pack = intent.getStringExtra("package");
+                title = intent.getStringExtra("title");
+                text = intent.getStringExtra("text");
+                Integer image = intent.getIntExtra("image", 0);
+                Log.d("onReceive: " + title, "text" + text);
+                list = new ArrayList<>();
+                for (int i = 1; i <= 7; i++) {
+                    list.add(title+"    "+text);
+
+                }
+                Log.d("listTitle " + title, "listText" + text);
+                adapterclass = new AdapterClass(getApplicationContext(), list);
+                recyclerView.setAdapter(adapterclass);
+                recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, new IntentFilter("Msg"));
 
 
+
+
+
+
+
+        SwipeableRecyclerViewTouchListener swipeTouchListener =
+                new SwipeableRecyclerViewTouchListener(recyclerView,
+                        new SwipeableRecyclerViewTouchListener.SwipeListener() {
+
+                            @Override
+                            public boolean canSwipeLeft(int position) {
+                                return true;
+                            }
+
+                            @Override
+                            public boolean canSwipeRight(int position) {
+                                return true;
+                            }
+
+                            @Override
+                            public void onDismissedBySwipeLeft(RecyclerView recyclerView, int[] reverseSortedPositions) {
+                                for (int position : reverseSortedPositions) {
+                                    list.remove(position);
+                                    adapterclass.notifyItemRemoved(position);
+                                }
+                                adapterclass.notifyDataSetChanged();
+                            }
+
+                            @Override
+                            public void onDismissedBySwipeRight(RecyclerView recyclerView, int[] reverseSortedPositions) {
+                                for (int position : reverseSortedPositions) {
+                                    list.remove(position);
+                                    adapterclass.notifyItemRemoved(position);
+                                }
+                                adapterclass.notifyDataSetChanged();
+                            }
+                        });
+
+        recyclerView.addOnItemTouchListener(swipeTouchListener);
     }
+
 
     private void chatHead_click() {
         //    boolean onClick = false;

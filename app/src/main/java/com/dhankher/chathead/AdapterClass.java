@@ -3,6 +3,7 @@ package com.dhankher.chathead;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -24,7 +25,7 @@ public class AdapterClass extends RecyclerView.Adapter<AdapterClass.viewHolder> 
 
     @Override
     public viewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View myView = LayoutInflater.from(context).inflate(R.layout.view_layout,parent,false);
+        View myView = LayoutInflater.from(context).inflate(R.layout.card_layout,parent,false);
         return new viewHolder(myView);
     }
 
@@ -41,10 +42,12 @@ public class AdapterClass extends RecyclerView.Adapter<AdapterClass.viewHolder> 
 
     public class viewHolder extends RecyclerView.ViewHolder{
         TextView textView;
-        public viewHolder(View itemView) {
+        public viewHolder(final View itemView) {
             super(itemView);
             textView= (TextView) itemView.findViewById(R.id.tv);
+
+        }
         }
 
     }
-}
+

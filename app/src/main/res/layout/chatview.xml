@@ -5,13 +5,13 @@
     android:layout_height="541dp"
     android:visibility="gone">
 
-
 <android.support.v7.widget.RecyclerView
     android:layout_width="match_parent"
     android:layout_height="541dp"
     android:layout_gravity="bottom"
     android:background="@drawable/chat_view"
     android:id="@+id/rvView">
+
 
 </android.support.v7.widget.RecyclerView>
 
